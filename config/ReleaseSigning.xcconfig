@@ -1,0 +1,2 @@
+// Populated on CI during signed TestFlight builds (.github/workflows/testflight.yml).
+// Kept empty by default so unsigned CI and fork builds remain unaffected.

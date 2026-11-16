@@ -4,6 +4,9 @@ options:
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -20,6 +23,8 @@ targets:
       - path: CityBuilder
     dependencies:
       - package: CityCore
+    configFiles:
+      Release: config/ReleaseSigning.xcconfig
     info:
       path: CityBuilder/Info.plist
       properties:
