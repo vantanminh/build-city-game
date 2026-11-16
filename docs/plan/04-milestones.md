@@ -78,7 +78,7 @@
 - [x] README đầy đủ: mô tả, ảnh chụp (nếu có), tính năng, cách build qua CI, cách cài IPA (AltStore/SideStore/Sideloadly), đóng góp, license
 - [x] `CONTRIBUTING.md`, issue templates (bug/feature) — tuỳ chọn
 - [x] Rà soát: không có warning nghiêm trọng, không force-unwrap nguy hiểm, không crash khi bản đồ trống
-- [ ] Tag `v1.0.0` (**hỏi người dùng trước khi tạo tag/release**)
+- [x] Tag `v1.0.0` (**hỏi người dùng trước khi tạo tag/release**)
 
 ## Backlog (sau v1)
 - [ ] Ký số + TestFlight (`03-ci-cd.md §7`)
