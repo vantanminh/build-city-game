@@ -68,10 +68,10 @@
 - [x] Test: income/expenses đúng công thức, phá sản sau 3 tháng
 
 ## M6 — Lưu/tải & màn hình bắt đầu
-- [ ] `SaveGame` (version 1) + round-trip test
-- [ ] `SaveStore` (atomic write, xử lý file hỏng)
-- [ ] Auto-save cuối tháng & khi vào background
-- [ ] Màn hình bắt đầu: Tiếp tục / Thành phố mới (tên + seed)
+- [x] `SaveGame` (version 1) + round-trip test
+- [x] `SaveStore` (atomic write, xử lý file hỏng)
+- [x] Auto-save cuối tháng & khi vào background
+- [x] Màn hình bắt đầu: Tiếp tục / Thành phố mới (tên + seed)
 
 ## M7 — Hoàn thiện & phát hành v1.0.0
 - [ ] `release.yml` (tag → Release + IPA)
