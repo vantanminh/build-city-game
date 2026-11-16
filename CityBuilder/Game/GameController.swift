@@ -36,6 +36,13 @@ enum GameSpeed: Int, CaseIterable, Codable {
     }
 }
 
+/// Detailed tile inspection payload shown when tapping a tile in `inspect` mode.
+struct InspectedTile: Equatable {
+    let point: GridPoint
+    let tile: Tile
+    let desirability: Int
+}
+
 /// Central @MainActor coordinator connecting `CityCore.City`, `CityScene`, and SwiftUI HUD.
 @MainActor
 final class GameController: ObservableObject {
@@ -43,9 +50,34 @@ final class GameController: ObservableObject {
     @Published private(set) var money: Int
     @Published private(set) var stats: CityStats
     @Published private(set) var dateText: String
-    @Published var selectedTool: Tool = .inspect
+    @Published private(set) var history: [MonthRecord]
+    @Published private(set) var monthlyBudget: MonthlyBudget
+    @Published var selectedTool: Tool = .inspect {
+        didSet {
+            if selectedTool != .inspect {
+                inspected = nil
+            }
+        }
+    }
     @Published var speed: GameSpeed = .normal
+    @Published var taxRate: Int {
+        didSet {
+            let clamped = max(Balance.minTaxRate, min(Balance.maxTaxRate, taxRate))
+            if taxRate != clamped {
+                taxRate = clamped
+                return
+            }
+            city.taxRate = clamped
+            Simulation.recomputeStats(city: city)
+            stats = city.stats
+            monthlyBudget = Economy.estimateMonthlyBudget(for: city)
+        }
+    }
     @Published var selectedGridPoint: GridPoint?
+    @Published var inspected: InspectedTile?
+    @Published var showSettings: Bool = false
+    @Published var isBankrupt: Bool = false
+    @Published private(set) var warningText: String?
     @Published private(set) var toast: String?
 
     private(set) var city: City
@@ -58,19 +90,32 @@ final class GameController: ObservableObject {
 
     init(city: City = City(name: L10n.defaultCityName, seed: UInt64.random(in: 1...999_999))) {
         self.city = city
+        self.city.refreshInfrastructure()
         self.cityName = city.name
         self.money = city.money
         self.stats = city.stats
+        self.taxRate = city.taxRate
+        self.history = city.history
+        self.monthlyBudget = Economy.estimateMonthlyBudget(for: city)
         self.dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
         self.simRng = SeededRandomNumberGenerator(seed: city.seed)
         self.scene = CityScene()
         self.scene.controller = self
+        updateWarning()
     }
 
     func tap(at point: GridPoint) {
         guard city.map.contains(point) else { return }
         selectedGridPoint = point
-        guard selectedTool != .inspect else { return }
+        if selectedTool == .inspect {
+            city.refreshInfrastructure()
+            inspected = InspectedTile(
+                point: point,
+                tile: city.map[point],
+                desirability: city.desirability(at: point)
+            )
+            return
+        }
         applySingleTool(at: point)
     }
 
@@ -109,6 +154,8 @@ final class GameController: ObservableObject {
             }
             money = city.money
             stats = city.stats
+            monthlyBudget = Economy.estimateMonthlyBudget(for: city)
+            updateWarning()
             scene.refresh(Array(changedPoints))
             for p in animatedPoints {
                 scene.animatePlacement(at: p)
@@ -148,12 +195,13 @@ final class GameController: ObservableObject {
     }
 
     func advance(dt: TimeInterval) {
-        guard speed.rawValue > 0 else { return }
+        guard speed.rawValue > 0, !isBankrupt else { return }
         accumulatedTime += dt
         let stepInterval = 1.0 / Double(speed.rawValue)
 
         var steps = 0
         var changed: Set<GridPoint> = []
+        var events: [CityEvent] = []
         while accumulatedTime >= stepInterval && steps < 5 {
             accumulatedTime -= stepInterval
             steps += 1
@@ -161,6 +209,7 @@ final class GameController: ObservableObject {
             for p in result.changed {
                 changed.insert(p)
             }
+            events.append(contentsOf: result.events)
         }
 
         guard steps > 0 else { return }
@@ -169,7 +218,30 @@ final class GameController: ObservableObject {
         }
         stats = city.stats
         money = city.money
+        history = city.history
+        monthlyBudget = Economy.estimateMonthlyBudget(for: city)
         dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
+        updateWarning()
+
+        if let currentInspected = inspected {
+            inspected = InspectedTile(
+                point: currentInspected.point,
+                tile: city.map[currentInspected.point],
+                desirability: city.desirability(at: currentInspected.point)
+            )
+        }
+
+        for event in events {
+            switch event {
+            case .milestone(let label):
+                showToast(L10n.milestoneToast(label), duration: 3.0)
+            case .monthEnded:
+                break
+            case .bankrupt:
+                speed = .paused
+                isBankrupt = true
+            }
+        }
     }
 
     func cycleSpeed() {
@@ -178,14 +250,22 @@ final class GameController: ObservableObject {
 
     func newCity(name: String, seed: UInt64) {
         city = City(name: name, seed: seed)
+        city.refreshInfrastructure()
         simRng = SeededRandomNumberGenerator(seed: seed)
         accumulatedTime = 0
         cityName = city.name
         money = city.money
         stats = city.stats
+        taxRate = city.taxRate
+        history = city.history
+        monthlyBudget = Economy.estimateMonthlyBudget(for: city)
         dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
         selectedGridPoint = nil
+        inspected = nil
+        isBankrupt = false
+        speed = .normal
         toast = nil
+        updateWarning()
         scene.reloadAll()
         scene.centerCamera()
     }
@@ -215,6 +295,8 @@ final class GameController: ObservableObject {
             }
             money = city.money
             stats = city.stats
+            monthlyBudget = Economy.estimateMonthlyBudget(for: city)
+            updateWarning()
             scene.refresh(Array(changed))
             scene.animatePlacement(at: point)
             Haptics.placementSuccess()
@@ -224,6 +306,18 @@ final class GameController: ObservableObject {
             triggerErrorFeedback(L10n.notEnoughMoney, isDrag: false)
         case .blocked(let reason):
             triggerErrorFeedback(reason, isDrag: false)
+        }
+    }
+
+    private func updateWarning() {
+        if city.money < 0 {
+            warningText = L10n.warningNegativeMoney()
+        } else if city.stats.unpoweredCount >= 3 {
+            warningText = L10n.warningUnpowered(city.stats.unpoweredCount)
+        } else if city.stats.noRoadCount >= 3 {
+            warningText = L10n.warningNoRoad(city.stats.noRoadCount)
+        } else {
+            warningText = nil
         }
     }
 
