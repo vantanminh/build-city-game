@@ -37,7 +37,14 @@ jobs:
     needs: core-tests
     steps:
       - uses: actions/checkout@v4
-      - run: xcodebuild -version
+      - name: Select Xcode 26+
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app
+          XCODE_APP=$(python3 -c 'import glob, re; apps = glob.glob("/Applications/Xcode_26*.app") or glob.glob("/Applications/Xcode*.app"); apps.sort(key=lambda p: [int(x) for x in re.findall(r"\d+", p)]); print(apps[-1])')
+          echo "Selecting Xcode: $XCODE_APP"
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          xcodebuild -version
 
       - name: Validate required TestFlight secrets
         env:
