@@ -10,19 +10,49 @@ protocol CityRenderer: AnyObject {
     func animatePlacement(at point: GridPoint)
 }
 
+/// Simulation time progression speeds.
+enum GameSpeed: Int, CaseIterable, Codable {
+    case paused = 0
+    case normal = 1
+    case fast = 3
+    case ultra = 10
+
+    var label: String {
+        switch self {
+        case .paused: return "⏸"
+        case .normal: return "1×"
+        case .fast: return "3×"
+        case .ultra: return "10×"
+        }
+    }
+
+    var next: GameSpeed {
+        switch self {
+        case .paused: return .normal
+        case .normal: return .fast
+        case .fast: return .ultra
+        case .ultra: return .paused
+        }
+    }
+}
+
 /// Central @MainActor coordinator connecting `CityCore.City`, `CityScene`, and SwiftUI HUD.
 @MainActor
 final class GameController: ObservableObject {
     @Published private(set) var cityName: String
     @Published private(set) var money: Int
     @Published private(set) var stats: CityStats
+    @Published private(set) var dateText: String
     @Published var selectedTool: Tool = .inspect
+    @Published var speed: GameSpeed = .normal
     @Published var selectedGridPoint: GridPoint?
     @Published private(set) var toast: String?
 
     private(set) var city: City
     let scene: CityScene
 
+    private var simRng: SeededRandomNumberGenerator
+    private var accumulatedTime: TimeInterval = 0
     private var toastTask: Task<Void, Never>?
     private var lastErrorFeedbackAt: Date = .distantPast
 
@@ -31,6 +61,8 @@ final class GameController: ObservableObject {
         self.cityName = city.name
         self.money = city.money
         self.stats = city.stats
+        self.dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
+        self.simRng = SeededRandomNumberGenerator(seed: city.seed)
         self.scene = CityScene()
         self.scene.controller = self
     }
@@ -72,7 +104,11 @@ final class GameController: ObservableObject {
         }
 
         if !changedPoints.isEmpty {
+            for infraPt in city.refreshInfrastructure() {
+                changedPoints.insert(infraPt)
+            }
             money = city.money
+            stats = city.stats
             scene.refresh(Array(changedPoints))
             for p in animatedPoints {
                 scene.animatePlacement(at: p)
@@ -112,14 +148,42 @@ final class GameController: ObservableObject {
     }
 
     func advance(dt: TimeInterval) {
-        // Simulation loop wired in M4.
+        guard speed.rawValue > 0 else { return }
+        accumulatedTime += dt
+        let stepInterval = 1.0 / Double(speed.rawValue)
+
+        var steps = 0
+        var changed: Set<GridPoint> = []
+        while accumulatedTime >= stepInterval && steps < 5 {
+            accumulatedTime -= stepInterval
+            steps += 1
+            let result = city.step(rng: &simRng)
+            for p in result.changed {
+                changed.insert(p)
+            }
+        }
+
+        guard steps > 0 else { return }
+        if !changed.isEmpty {
+            scene.refresh(Array(changed))
+        }
+        stats = city.stats
+        money = city.money
+        dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
+    }
+
+    func cycleSpeed() {
+        speed = speed.next
     }
 
     func newCity(name: String, seed: UInt64) {
         city = City(name: name, seed: seed)
+        simRng = SeededRandomNumberGenerator(seed: seed)
+        accumulatedTime = 0
         cityName = city.name
         money = city.money
         stats = city.stats
+        dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
         selectedGridPoint = nil
         toast = nil
         scene.reloadAll()
@@ -140,12 +204,18 @@ final class GameController: ObservableObject {
         let result = city.apply(selectedTool, at: point)
         switch result {
         case .placed:
-            money = city.money
-            var changed = [point]
+            var changed = Set([point])
             if selectedTool == .road || selectedTool == .bulldoze {
-                changed.append(contentsOf: city.map.neighbors4(point))
+                for neighbor in city.map.neighbors4(point) {
+                    changed.insert(neighbor)
+                }
             }
-            scene.refresh(changed)
+            for infraPt in city.refreshInfrastructure() {
+                changed.insert(infraPt)
+            }
+            money = city.money
+            stats = city.stats
+            scene.refresh(Array(changed))
             scene.animatePlacement(at: point)
             Haptics.placementSuccess()
         case .unchanged:

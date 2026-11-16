@@ -8,6 +8,10 @@ enum L10n {
     static let notEnoughMoney = "Không đủ tiền"
     static let freeLabel = "Miễn phí"
 
+    static func dateLabel(month: Int, year: Int) -> String {
+        "Th \(month) · Năm \(year)"
+    }
+
     static func toolName(_ tool: Tool) -> String {
         switch tool {
         case .inspect: return "Xem"

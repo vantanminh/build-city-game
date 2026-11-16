@@ -19,21 +19,19 @@ struct ContentView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(controller.cityName)
                             .font(.headline)
-                        if let point = controller.selectedGridPoint, controller.city.map.contains(point) {
-                            let tile = controller.city.map[point]
-                            Text("(\(point.x), \(point.y)) · \(L10n.tileKindName(tile.kind))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text(L10n.appTitle)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text("\(controller.dateText) · Dân: \(controller.stats.population)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
                     Text("$\(controller.money.formatted())")
                         .font(.headline.monospacedDigit())
                         .foregroundStyle(controller.money >= 0 ? Color.primary : Color.red)
+                    Button(controller.speed.label) {
+                        controller.cycleSpeed()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                     Button(L10n.newSeedButton) {
                         controller.newCity(
                             name: L10n.defaultCityName,
