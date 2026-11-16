@@ -25,6 +25,7 @@ final class CityScene: SKScene, UIGestureRecognizerDelegate, CityRenderer {
     private weak var configuredView: SKView?
     private var lastUpdateTime: TimeInterval?
     private var lastPaintedPoint: GridPoint?
+    private var touchStartGridPoint: GridPoint?
 
     // MARK: - Lifecycle
 
@@ -150,20 +151,22 @@ final class CityScene: SKScene, UIGestureRecognizerDelegate, CityRenderer {
         guard touches.count == 1, let touch = touches.first, let view = self.view else { return }
         let viewLoc = touch.location(in: view)
         let point = gridPoint(fromViewPoint: viewLoc)
+        touchStartGridPoint = point
         updateHighlight(at: point)
     }
 
     @objc private func handleTap(_ recognizer: UITapGestureRecognizer) {
         guard recognizer.state == .ended, let view = self.view else { return }
         let point = gridPoint(fromViewPoint: recognizer.location(in: view))
-        updateHighlight(at: point)
         controller?.tap(at: point)
+        updateHighlight(at: point)
+        touchStartGridPoint = nil
     }
 
     @objc private func handleSinglePan(_ recognizer: UIPanGestureRecognizer) {
         guard let view = self.view, let controller = controller else { return }
 
-        if controller.selectedTool == .inspect {
+        if controller.selectedTool == .inspect || !controller.isDragPaintable(controller.selectedTool) {
             if recognizer.state == .changed {
                 let translation = recognizer.translation(in: view)
                 panCamera(by: translation)
@@ -175,17 +178,19 @@ final class CityScene: SKScene, UIGestureRecognizerDelegate, CityRenderer {
         let point = gridPoint(fromViewPoint: recognizer.location(in: view))
         switch recognizer.state {
         case .began:
+            let start = touchStartGridPoint
             lastPaintedPoint = point
+            controller.paint(from: start, to: point)
             updateHighlight(at: point)
-            controller.paint(from: nil, to: point)
         case .changed:
-            updateHighlight(at: point)
             if point != lastPaintedPoint {
                 controller.paint(from: lastPaintedPoint, to: point)
                 lastPaintedPoint = point
             }
+            updateHighlight(at: point)
         case .ended, .cancelled, .failed:
             lastPaintedPoint = nil
+            touchStartGridPoint = nil
         default:
             break
         }
