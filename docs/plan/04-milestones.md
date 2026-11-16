@@ -18,13 +18,13 @@
 > Intake gốc: `IN-001`. Quyết định kiến trúc: `DEC-001` … `DEC-005` (`harness query decisions --json`).
 
 ## M0 — Khởi tạo repo & CI "Hello"
-- [ ] `git init`, `.gitignore` (Xcode, SwiftPM `.build/`, `*.xcodeproj`, `build/`, `Payload/`, `*.ipa`, icon PNG sinh tự động, `.DS_Store`)
-- [ ] `LICENSE` (MIT), `README.md` khung
-- [ ] `project.yml` + app SwiftUI tối thiểu hiển thị "Thành Phố Của Tôi"
-- [ ] `CityCore` package rỗng + 1 test giả
-- [ ] `scripts/make_icon.swift` + `AppIcon.appiconset/Contents.json`
-- [ ] `.github/workflows/ci.yml`
-- [ ] Tạo repo GitHub (**hỏi người dùng tên repo & xác nhận public trước khi tạo/push**), push, CI xanh, tải được IPA artifact
+- [x] `git init`, `.gitignore` (Xcode, SwiftPM `.build/`, `*.xcodeproj`, `build/`, `Payload/`, `*.ipa`, icon PNG sinh tự động, `.DS_Store`)
+- [x] `LICENSE` (MIT), `README.md` khung
+- [x] `project.yml` + app SwiftUI tối thiểu hiển thị "Thành Phố Của Tôi"
+- [x] `CityCore` package rỗng + 1 test giả
+- [x] `scripts/make_icon.swift` + `AppIcon.appiconset/Contents.json`
+- [x] `.github/workflows/ci.yml`
+- [x] Tạo repo GitHub (**hỏi người dùng tên repo & xác nhận public trước khi tạo/push**), push, CI xanh, tải được IPA artifact
 
 **Nghiệm thu:** `gh run list` hiện run thành công, artifact chứa `CityBuilder-unsigned.ipa`.
 
