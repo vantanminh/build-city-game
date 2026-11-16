@@ -47,6 +47,9 @@ Tệp `CityBuilder-unsigned.ipa` (tải từ tab **Actions** hoặc trang **Rele
      xcrun simctl install booted CityBuilder.app
      ```
 
+## Đưa app lên TestFlight (nếu có tài khoản Apple Developer)
+Xem hướng dẫn từng bước từ máy Windows (không cần Mac) tại [docs/testflight-setup.md](docs/testflight-setup.md) và workflow [`.github/workflows/testflight.yml`](.github/workflows/testflight.yml).
+
 ## Đóng góp
 Xem hướng dẫn tại [CONTRIBUTING.md](CONTRIBUTING.md). Rất hoan nghênh bug report, đề xuất tính năng và Pull Request!
 
