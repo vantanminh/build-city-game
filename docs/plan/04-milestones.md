@@ -53,11 +53,11 @@
 - [x] Hiệu ứng "pop" khi đặt
 
 ## M4 — Mô phỏng
-- [ ] Road access, PowerGrid (BFS + capacity), desirability (cache dirty)
-- [ ] CityStats, demand RCI, phát triển/suy thoái, happiness
-- [ ] GameDate + tốc độ (pause/1×/3×/10×), vòng lặp trong `SKScene.update`
-- [ ] Icon ⚡ cho ô thiếu điện
-- [ ] Test: power capacity cắt đúng số ô; vùng không đường không lên level; seed cố định → kết quả 365 tick tất định; demand đúng công thức
+- [x] Road access, PowerGrid (BFS + capacity), desirability (cache dirty)
+- [x] CityStats, demand RCI, phát triển/suy thoái, happiness
+- [x] GameDate + tốc độ (pause/1×/3×/10×), vòng lặp trong `SKScene.update`
+- [x] Icon ⚡ cho ô thiếu điện
+- [x] Test: power capacity cắt đúng số ô; vùng không đường không lên level; seed cố định → kết quả 365 tick tất định; demand đúng công thức
 
 ## M5 — Kinh tế & HUD
 - [ ] Chốt sổ tháng, lịch sử 24 tháng, phá sản
