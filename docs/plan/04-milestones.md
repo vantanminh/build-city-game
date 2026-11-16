@@ -81,7 +81,7 @@
 - [x] Tag `v1.0.0` (**hỏi người dùng trước khi tạo tag/release**)
 
 ## Backlog (sau v1)
-- [ ] Ký số + TestFlight (`03-ci-cd.md §7`)
+- [x] Ký số + TestFlight (`03-ci-cd.md §7`) — đã cấu hình `testflight.yml` (`US-009`)
 - [ ] Tiếng Anh (String Catalog `Localizable.xcstrings`)
 - [ ] Công trình 2×2 (sân vận động, sân bay), xe chạy trên đường
 - [ ] Ô nhiễm, cảnh sát, cứu hoả, nước sạch
