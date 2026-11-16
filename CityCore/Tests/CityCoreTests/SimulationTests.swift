@@ -139,4 +139,23 @@ final class SimulationTests: XCTestCase {
 
         XCTAssertEqual(city.map[GridPoint(x: 1, y: 0)].level, 0)
     }
+
+    func testEmptyMapSimulationAndEconomyDoNotCrash() throws {
+        let city = City(name: "Empty", seed: 1, size: 16)
+        var rng = SeededRandomNumberGenerator(seed: 1)
+
+        for _ in 0..<365 {
+            _ = city.step(rng: &rng)
+        }
+
+        XCTAssertEqual(city.stats.population, 0)
+        XCTAssertEqual(city.stats.jobs, 0)
+        XCTAssertEqual(city.money, Balance.startingMoney)
+        XCTAssertEqual(city.history.count, 12)
+
+        let data = try JSONEncoder().encode(city.snapshot(rngState: rng.state))
+        let decoded = try JSONDecoder().decode(SaveGame.self, from: data)
+        let restored = try City(from: decoded)
+        XCTAssertEqual(restored.stats.population, 0)
+    }
 }

@@ -14,7 +14,10 @@ final class SaveStore {
     private let fileName = "city.json"
     private let corruptFileName = "city.corrupt.json"
 
-    init(directoryURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]) {
+    init(
+        directoryURL: URL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+    ) {
         self.directoryURL = directoryURL
     }
 
