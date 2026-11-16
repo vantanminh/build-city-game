@@ -60,12 +60,12 @@
 - [x] Test: power capacity cắt đúng số ô; vùng không đường không lên level; seed cố định → kết quả 365 tick tất định; demand đúng công thức
 
 ## M5 — Kinh tế & HUD
-- [ ] Chốt sổ tháng, lịch sử 24 tháng, phá sản
-- [ ] TopBar (tiền, dân số, ngày, hạnh phúc, tốc độ), DemandBars
-- [ ] TileInfo khi inspect
-- [ ] Settings sheet: slider thuế, biểu đồ thu/chi (SwiftUI `Path` hoặc Swift Charts – iOS 16 có Charts), Giới thiệu
-- [ ] Cột mốc dân số + cảnh báo
-- [ ] Test: income/expenses đúng công thức, phá sản sau 3 tháng
+- [x] Chốt sổ tháng, lịch sử 24 tháng, phá sản
+- [x] TopBar (tiền, dân số, ngày, hạnh phúc, tốc độ), DemandBars
+- [x] TileInfo khi inspect
+- [x] Settings sheet: slider thuế, biểu đồ thu/chi (SwiftUI `Path` hoặc Swift Charts – iOS 16 có Charts), Giới thiệu
+- [x] Cột mốc dân số + cảnh báo
+- [x] Test: income/expenses đúng công thức, phá sản sau 3 tháng
 
 ## M6 — Lưu/tải & màn hình bắt đầu
 - [ ] `SaveGame` (version 1) + round-trip test
