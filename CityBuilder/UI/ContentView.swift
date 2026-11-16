@@ -14,38 +14,14 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(controller.cityName)
-                            .font(.headline)
-                        Text("\(controller.dateText) · Dân: \(controller.stats.population)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(spacing: 8) {
+                TopBarView(controller: controller)
+
+                HStack(alignment: .top) {
+                    DemandBarsView(stats: controller.stats)
+                        .padding(.leading, 10)
                     Spacer()
-                    Text("$\(controller.money.formatted())")
-                        .font(.headline.monospacedDigit())
-                        .foregroundStyle(controller.money >= 0 ? Color.primary : Color.red)
-                    Button(controller.speed.label) {
-                        controller.cycleSpeed()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    Button(L10n.newSeedButton) {
-                        controller.newCity(
-                            name: L10n.defaultCityName,
-                            seed: UInt64.random(in: 1...999_999)
-                        )
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
 
                 if let toast = controller.toast {
                     Text(toast)
@@ -54,15 +30,35 @@ struct ContentView: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
                         .background(Color.black.opacity(0.78), in: Capsule())
-                        .padding(.top, 8)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
 
                 Spacer()
 
+                if let inspected = controller.inspected {
+                    TileInfoView(info: inspected) {
+                        controller.inspected = nil
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+
                 ToolbarView(selectedTool: $controller.selectedTool)
             }
             .animation(.easeInOut(duration: 0.2), value: controller.toast)
+            .animation(.easeInOut(duration: 0.2), value: controller.inspected)
+        }
+        .sheet(isPresented: $controller.showSettings) {
+            SettingsSheet(controller: controller)
+        }
+        .alert(L10n.bankruptTitle, isPresented: $controller.isBankrupt) {
+            Button(L10n.playAgainLabel) {
+                controller.newCity(
+                    name: L10n.defaultCityName,
+                    seed: UInt64.random(in: 1...999_999)
+                )
+            }
+        } message: {
+            Text(L10n.bankruptMessage)
         }
     }
 }
