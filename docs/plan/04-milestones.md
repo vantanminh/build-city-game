@@ -29,13 +29,13 @@
 **Nghiệm thu:** `gh run list` hiện run thành công, artifact chứa `CityBuilder-unsigned.ipa`.
 
 ## M1 — CityCore: model & đặt công trình
-- [ ] `TileKind`, `Tile`, `GridPoint`, `Tool`, `Balance` (hằng số)
-- [ ] `CityMap` + `neighbors4`, `points(within:)`
-- [ ] `SeededRandomNumberGenerator` (SplitMix64)
-- [ ] `TerrainGenerator` tất định theo seed (hồ/sông, rừng, vùng trung tâm trống)
-- [ ] `City.apply(_:at:)` với đầy đủ luật ở `01-game-design.md §3`
-- [ ] `roadMask(at:)`
-- [ ] Test: chi phí, chặn trên nước, phá rừng, không đủ tiền, bulldoze, terrain cùng seed → cùng map
+- [x] `TileKind`, `Tile`, `GridPoint`, `Tool`, `Balance` (hằng số)
+- [x] `CityMap` + `neighbors4`, `points(within:)`
+- [x] `SeededRandomNumberGenerator` (SplitMix64)
+- [x] `TerrainGenerator` tất định theo seed (hồ/sông, rừng, vùng trung tâm trống)
+- [x] `City.apply(_:at:)` với đầy đủ luật ở `01-game-design.md §3`
+- [x] `roadMask(at:)`
+- [x] Test: chi phí, chặn trên nước, phá rừng, không đủ tiền, bulldoze, terrain cùng seed → cùng map
 
 ## M2 — Bản đồ isometric hiển thị được
 - [ ] `IsoMath` (+ test chuyển đổi 2 chiều nếu đặt trong CityCore)
