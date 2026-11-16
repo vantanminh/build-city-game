@@ -2,7 +2,9 @@
 
 Workflow [`.github/workflows/testflight.yml`](../.github/workflows/testflight.yml) tự động test `CityCore`, ký số bản `Release` và đẩy `.ipa` lên **TestFlight** trên GitHub Actions (`macos-15`). Toàn bộ khâu chuẩn bị chứng chỉ bên dưới thực hiện được trực tiếp trên **Windows** (không cần máy Mac).
 
-> **Lưu ý bảo mật:** Tạo và lưu các file khoá (`.key`, `.cer`, `.p12`, `.mobileprovision`, `.p8`) trong một thư mục riêng **ngoài repo** (ví dụ `D:\apple-signing\`), tuyệt đối không commit vào Git.
+> **Lưu ý bảo mật:** Tạo và lưu các file khoá (`.key`, `.cer`, `.p12`, `.mobileprovision`, `.p8`) trong một thư mục riêng **ngoài repo** (ví dụ `$HOME\apple-signing\`), tuyệt đối không commit vào Git.
+>
+> **Nếu bạn đã có sẵn `.p12` (Apple Distribution) và `AuthKey_*.p8` từ app khác cùng tài khoản Apple Developer:** bạn có thể dùng lại luôn 2 file đó (chỉ cần tạo mới App ID, App trên App Store Connect và file `.mobileprovision` riêng cho `io.github.vantanminh.citybuilder`).
 
 ---
 
