@@ -52,6 +52,20 @@ struct SettingsSheet: View {
                 }
 
                 Section(L10n.cityActionsTitle) {
+                    Button {
+                        controller.save(showFeedback: true)
+                        dismiss()
+                    } label: {
+                        Label(L10n.saveNowLabel, systemImage: "square.and.arrow.down")
+                    }
+
+                    Button {
+                        controller.returnToStartMenu()
+                        dismiss()
+                    } label: {
+                        Label(L10n.backToStartLabel, systemImage: "house")
+                    }
+
                     Button(role: .destructive) {
                         confirmNewCity = true
                     } label: {

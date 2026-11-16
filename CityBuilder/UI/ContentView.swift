@@ -4,8 +4,24 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var controller = GameController()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
+        Group {
+            if controller.isPlaying {
+                gameView
+            } else {
+                StartView(controller: controller)
+            }
+        }
+        .onChange(of: scenePhase) { phase in
+            if phase == .background && controller.isPlaying {
+                controller.save(showFeedback: false)
+            }
+        }
+    }
+
+    private var gameView: some View {
         ZStack {
             SpriteView(
                 scene: controller.scene,
