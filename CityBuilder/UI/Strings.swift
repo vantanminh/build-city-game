@@ -35,6 +35,18 @@ enum L10n {
     static let roadYes = "Có đường"
     static let roadNo = "Thiếu đường"
     static let notApplicable = "—"
+    static let continueGame = "Tiếp tục"
+    static let newCitySection = "Thành phố mới"
+    static let cityNameField = "Tên thành phố"
+    static let seedField = "Seed bản đồ (tuỳ chọn)"
+    static let randomSeedLabel = "Ngẫu nhiên"
+    static let startBuilding = "Bắt đầu xây dựng"
+    static let saveNowLabel = "Lưu ngay"
+    static let savedToast = "Đã lưu thành phố"
+    static let saveFailedToast = "Không thể lưu tệp"
+    static let corruptSaveToast = "Tệp lưu bị hỏng hoặc không tương thích — đã sao lưu thành city.corrupt.json."
+    static let backToStartLabel = "Về màn hình chính"
+    static let startSubtitle = "Quy hoạch, cấp điện, cân bằng R-C-I và phát triển đô thị của riêng bạn"
 
     static func dateLabel(month: Int, year: Int) -> String {
         "Th \(month) · Năm \(year)"

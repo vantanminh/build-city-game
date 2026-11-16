@@ -77,31 +77,62 @@ final class GameController: ObservableObject {
     @Published var inspected: InspectedTile?
     @Published var showSettings: Bool = false
     @Published var isBankrupt: Bool = false
+    @Published var isPlaying: Bool = false
+    @Published private(set) var savedPreview: SaveGame?
     @Published private(set) var warningText: String?
     @Published private(set) var toast: String?
 
     private(set) var city: City
     let scene: CityScene
+    private let saveStore: SaveStore
 
     private var simRng: SeededRandomNumberGenerator
     private var accumulatedTime: TimeInterval = 0
     private var toastTask: Task<Void, Never>?
     private var lastErrorFeedbackAt: Date = .distantPast
 
-    init(city: City = City(name: L10n.defaultCityName, seed: UInt64.random(in: 1...999_999))) {
-        self.city = city
-        self.city.refreshInfrastructure()
-        self.cityName = city.name
-        self.money = city.money
-        self.stats = city.stats
-        self.taxRate = city.taxRate
-        self.history = city.history
-        self.monthlyBudget = Economy.estimateMonthlyBudget(for: city)
-        self.dateText = L10n.dateLabel(month: city.date.month, year: city.date.year)
-        self.simRng = SeededRandomNumberGenerator(seed: city.seed)
+    init(saveStore: SaveStore = SaveStore()) {
+        self.saveStore = saveStore
+        let initialCity: City
+        let initialRngState: UInt64
+        var preview: SaveGame?
+        var corruptDetected = false
+
+        switch saveStore.load() {
+        case .loaded(let loadedCity, let snapshot):
+            initialCity = loadedCity
+            initialRngState = loadedCity.savedRngState
+            preview = snapshot
+        case .corrupted:
+            let seed = UInt64.random(in: 1...999_999)
+            initialCity = City(name: L10n.defaultCityName, seed: seed)
+            initialCity.refreshInfrastructure()
+            initialRngState = seed
+            corruptDetected = true
+        case .missing:
+            let seed = UInt64.random(in: 1...999_999)
+            initialCity = City(name: L10n.defaultCityName, seed: seed)
+            initialCity.refreshInfrastructure()
+            initialRngState = seed
+        }
+
+        self.city = initialCity
+        self.savedPreview = preview
+        self.cityName = initialCity.name
+        self.money = initialCity.money
+        self.stats = initialCity.stats
+        self.taxRate = initialCity.taxRate
+        self.history = initialCity.history
+        self.monthlyBudget = Economy.estimateMonthlyBudget(for: initialCity)
+        self.dateText = L10n.dateLabel(month: initialCity.date.month, year: initialCity.date.year)
+        self.simRng = SeededRandomNumberGenerator(state: initialRngState)
         self.scene = CityScene()
         self.scene.controller = self
         updateWarning()
+
+        if corruptDetected {
+            showToast(L10n.corruptSaveToast, duration: 4.0)
+        }
     }
 
     func tap(at point: GridPoint) {
@@ -236,7 +267,7 @@ final class GameController: ObservableObject {
             case .milestone(let label):
                 showToast(L10n.milestoneToast(label), duration: 3.0)
             case .monthEnded:
-                break
+                save(showFeedback: false)
             case .bankrupt:
                 speed = .paused
                 isBankrupt = true
@@ -248,10 +279,56 @@ final class GameController: ObservableObject {
         speed = speed.next
     }
 
+    func continueSavedCity() {
+        switch saveStore.load() {
+        case .loaded(let loadedCity, let snapshot):
+            savedPreview = snapshot
+            applyLoadedCity(loadedCity, rngState: loadedCity.savedRngState)
+            isPlaying = true
+        case .corrupted:
+            savedPreview = nil
+            showToast(L10n.corruptSaveToast, duration: 4.0)
+        case .missing:
+            savedPreview = nil
+        }
+    }
+
     func newCity(name: String, seed: UInt64) {
-        city = City(name: name, seed: seed)
-        city.refreshInfrastructure()
-        simRng = SeededRandomNumberGenerator(seed: seed)
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedName = trimmed.isEmpty ? L10n.defaultCityName : trimmed
+        let created = City(name: resolvedName, seed: seed)
+        created.refreshInfrastructure()
+        applyLoadedCity(created, rngState: seed)
+        isPlaying = true
+        save(showFeedback: false)
+    }
+
+    func save(showFeedback: Bool = false) {
+        let snapshot = city.snapshot(rngState: simRng.state)
+        do {
+            try saveStore.save(snapshot)
+            savedPreview = snapshot
+            if showFeedback {
+                showToast(L10n.savedToast)
+            }
+        } catch {
+            if showFeedback {
+                showToast(L10n.saveFailedToast)
+            }
+        }
+    }
+
+    func returnToStartMenu() {
+        save(showFeedback: false)
+        speed = .paused
+        inspected = nil
+        showSettings = false
+        isPlaying = false
+    }
+
+    private func applyLoadedCity(_ nextCity: City, rngState: UInt64) {
+        city = nextCity
+        simRng = SeededRandomNumberGenerator(state: rngState)
         accumulatedTime = 0
         cityName = city.name
         money = city.money

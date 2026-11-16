@@ -33,6 +33,7 @@ final class CityScene: SKScene, UIGestureRecognizerDelegate, CityRenderer {
         super.didMove(to: view)
         backgroundColor = UIColor(red: 0.14, green: 0.19, blue: 0.24, alpha: 1.0)
         scaleMode = .resizeFill
+        lastUpdateTime = nil
 
         if mapNode.parent == nil {
             addChild(mapNode)
