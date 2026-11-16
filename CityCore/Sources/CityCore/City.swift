@@ -62,6 +62,26 @@ public final class City {
         self.desirabilityGrid = Array(repeating: Balance.baseDesirability, count: map.width * map.height)
     }
 
+    /// Cached desirability score (`0...100`) at grid point `p`.
+    public func desirability(at p: GridPoint) -> Int {
+        guard map.contains(p) else { return Balance.baseDesirability }
+        let idx = p.y * map.width + p.x
+        guard idx >= 0 && idx < desirabilityGrid.count else { return Balance.baseDesirability }
+        return desirabilityGrid[idx]
+    }
+
+    /// Recomputes road access, power grid, desirability, and stats if the map has changed.
+    @discardableResult
+    public func refreshInfrastructure() -> [GridPoint] {
+        guard mapDirty else { return [] }
+        return Simulation.recomputeInfrastructure(city: self)
+    }
+
+    /// Advances the city simulation by 1 day using a caller-provided RNG.
+    public func step(rng: inout some RandomNumberGenerator) -> StepResult {
+        Simulation.step(city: self, rng: &rng)
+    }
+
     /// Applies `tool` at grid coordinate `p` following all placement and cost rules.
     public func apply(_ tool: Tool, at p: GridPoint) -> PlacementResult {
         guard map.contains(p) else {
