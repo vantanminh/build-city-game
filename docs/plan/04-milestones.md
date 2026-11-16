@@ -74,10 +74,10 @@
 - [x] Màn hình bắt đầu: Tiếp tục / Thành phố mới (tên + seed)
 
 ## M7 — Hoàn thiện & phát hành v1.0.0
-- [ ] `release.yml` (tag → Release + IPA)
-- [ ] README đầy đủ: mô tả, ảnh chụp (nếu có), tính năng, cách build qua CI, cách cài IPA (AltStore/SideStore/Sideloadly), đóng góp, license
-- [ ] `CONTRIBUTING.md`, issue templates (bug/feature) — tuỳ chọn
-- [ ] Rà soát: không có warning nghiêm trọng, không force-unwrap nguy hiểm, không crash khi bản đồ trống
+- [x] `release.yml` (tag → Release + IPA)
+- [x] README đầy đủ: mô tả, ảnh chụp (nếu có), tính năng, cách build qua CI, cách cài IPA (AltStore/SideStore/Sideloadly), đóng góp, license
+- [x] `CONTRIBUTING.md`, issue templates (bug/feature) — tuỳ chọn
+- [x] Rà soát: không có warning nghiêm trọng, không force-unwrap nguy hiểm, không crash khi bản đồ trống
 - [ ] Tag `v1.0.0` (**hỏi người dùng trước khi tạo tag/release**)
 
 ## Backlog (sau v1)
