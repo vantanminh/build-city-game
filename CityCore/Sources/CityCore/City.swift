@@ -22,6 +22,7 @@ public final class City {
     public var date: GameDate
     public internal(set) var stats: CityStats
     public internal(set) var history: [MonthRecord]
+    public var savedRngState: UInt64
 
     internal var mapDirty: Bool = true
     internal var ticksSincePowerUpdate: Int = 0
@@ -32,6 +33,7 @@ public final class City {
     public init(name: String, seed: UInt64, size: Int = Balance.defaultMapSize) {
         self.name = name
         self.seed = seed
+        self.savedRngState = seed
         self.map = TerrainGenerator.generate(size: size, seed: seed)
         self.money = Balance.startingMoney
         self.taxRate = Balance.defaultTaxRate
@@ -53,6 +55,7 @@ public final class City {
     ) {
         self.name = name
         self.seed = seed
+        self.savedRngState = seed
         self.map = map
         self.money = money
         self.taxRate = max(Balance.minTaxRate, min(Balance.maxTaxRate, taxRate))
@@ -60,6 +63,55 @@ public final class City {
         self.stats = stats
         self.history = history
         self.desirabilityGrid = Array(repeating: Balance.baseDesirability, count: map.width * map.height)
+    }
+
+    /// Restores a city from a versioned `SaveGame` snapshot.
+    public init(from save: SaveGame) throws {
+        guard save.version == SaveGame.currentVersion else {
+            throw SaveGameError.unsupportedVersion(save.version)
+        }
+        guard save.map.width > 0,
+              save.map.height > 0,
+              save.map.tiles.count == save.map.width * save.map.height else {
+            throw SaveGameError.invalidMapDimensions
+        }
+
+        self.name = save.name
+        self.seed = save.seed
+        self.savedRngState = save.rngState
+        self.map = save.map
+        self.money = save.money
+        self.taxRate = max(Balance.minTaxRate, min(Balance.maxTaxRate, save.taxRate))
+        self.date = save.date
+        self.stats = save.stats
+        self.history = save.history
+        self.triggeredMilestones = Set(save.triggeredMilestones)
+        self.negativeBankruptcyMonths = save.negativeBankruptcyMonths
+        self.desirabilityGrid = Array(repeating: Balance.baseDesirability, count: save.map.width * save.map.height)
+        self.mapDirty = true
+        self.refreshInfrastructure()
+        self.stats.happiness = save.stats.happiness
+    }
+
+    /// Captures a serializable `SaveGame` snapshot of the current city state.
+    public func snapshot(rngState: UInt64? = nil) -> SaveGame {
+        if let rngState {
+            savedRngState = rngState
+        }
+        return SaveGame(
+            version: SaveGame.currentVersion,
+            name: name,
+            seed: seed,
+            rngState: savedRngState,
+            map: map,
+            money: money,
+            taxRate: taxRate,
+            date: date,
+            stats: stats,
+            history: history,
+            triggeredMilestones: triggeredMilestones.sorted(),
+            negativeBankruptcyMonths: negativeBankruptcyMonths
+        )
     }
 
     /// Cached desirability score (`0...100`) at grid point `p`.
