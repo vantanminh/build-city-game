@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  core-tests:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - name: Test CityCore
+        working-directory: CityCore
+        run: swift test
+
+  release:
+    runs-on: macos-15
+    needs: core-tests
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Resolve release version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER="1.0.0"
+          fi
+          echo "marketing=$VER" >> "$GITHUB_OUTPUT"
+      - name: Generate app icon
+        run: swift scripts/make_icon.swift CityBuilder/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build for Simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project CityBuilder.xcodeproj -scheme CityBuilder \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim \
+            MARKETING_VERSION="${{ steps.version.outputs.marketing }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO build | tee build-sim.log
+      - name: Build unsigned device app
+        run: |
+          set -o pipefail
+          xcodebuild -project CityBuilder.xcodeproj -scheme CityBuilder \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device \
+            MARKETING_VERSION="${{ steps.version.outputs.marketing }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build-device.log
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/device/Build/Products/Release-iphoneos/CityBuilder.app Payload/
+          zip -qry CityBuilder-unsigned.ipa Payload
+      - name: Zip simulator app
+        run: |
+          cd build/sim/Build/Products/Debug-iphonesimulator
+          zip -qry "$GITHUB_WORKSPACE/CityBuilder-simulator.zip" CityBuilder.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CityBuilder-release-${{ steps.version.outputs.marketing }}
+          path: |
+            CityBuilder-unsigned.ipa
+            CityBuilder-simulator.zip
+          retention-days: 30
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            CityBuilder-unsigned.ipa
+            CityBuilder-simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: release-build-logs
+          path: "*.log"
