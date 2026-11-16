@@ -46,11 +46,11 @@
 **Nghiệm thu:** CI build xanh; (nếu người dùng cài được IPA) thấy bản đồ, kéo/zoom mượt.
 
 ## M3 — Xây dựng tương tác
-- [ ] `GameController` + `CityRenderer`
-- [ ] Toolbar SwiftUI, chọn tool, tap để đặt, kéo để vẽ (nội suy, không bị đứt nét)
-- [ ] Texture công trình: R/C/I L1–L3, park, powerPlant, school, hospital
-- [ ] Toast + haptic khi không đủ tiền / bị chặn
-- [ ] Hiệu ứng "pop" khi đặt
+- [x] `GameController` + `CityRenderer`
+- [x] Toolbar SwiftUI, chọn tool, tap để đặt, kéo để vẽ (nội suy, không bị đứt nét)
+- [x] Texture công trình: R/C/I L1–L3, park, powerPlant, school, hospital
+- [x] Toast + haptic khi không đủ tiền / bị chặn
+- [x] Hiệu ứng "pop" khi đặt
 
 ## M4 — Mô phỏng
 - [ ] Road access, PowerGrid (BFS + capacity), desirability (cache dirty)
