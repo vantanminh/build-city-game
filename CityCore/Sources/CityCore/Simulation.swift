@@ -75,10 +75,15 @@ public enum Simulation {
         // Step 5.7: Happiness smoothing.
         updateHappiness(city: city)
 
-        // Step 4 & 6: Advance date; month closing hook (full Economy added in M5).
+        // Step 7: Population milestones.
+        events.append(contentsOf: Economy.evaluateMilestones(city: city))
+
+        // Step 4 & 6: Advance date and settle monthly economy on month boundary.
+        let closingYear = city.date.year
+        let closingMonth = city.date.month
         let monthEnded = city.date.advanceDay()
         if monthEnded {
-            events.append(.monthEnded(income: 0, expenses: 0))
+            events.append(contentsOf: Economy.closeMonth(city: city, year: closingYear, month: closingMonth))
         }
 
         return StepResult(changed: changedOrder, events: events)
