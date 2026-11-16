@@ -38,10 +38,10 @@
 - [x] Test: chi phí, chặn trên nước, phá rừng, không đủ tiền, bulldoze, terrain cùng seed → cùng map
 
 ## M2 — Bản đồ isometric hiển thị được
-- [ ] `IsoMath` (+ test chuyển đổi 2 chiều nếu đặt trong CityCore)
-- [ ] `TextureFactory`: grass, water, forest, road (16 mask), zone L0
-- [ ] `CityScene` vẽ toàn bộ bản đồ, camera pan (1 & 2 ngón) + pinch zoom, kẹp bounds
-- [ ] Highlight ô dưới ngón tay
+- [x] `IsoMath` (+ test chuyển đổi 2 chiều nếu đặt trong CityCore)
+- [x] `TextureFactory`: grass, water, forest, road (16 mask), zone L0
+- [x] `CityScene` vẽ toàn bộ bản đồ, camera pan (1 & 2 ngón) + pinch zoom, kẹp bounds
+- [x] Highlight ô dưới ngón tay
 
 **Nghiệm thu:** CI build xanh; (nếu người dùng cài được IPA) thấy bản đồ, kéo/zoom mượt.
 
