@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-tests:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - name: Test CityCore
+        working-directory: CityCore
+        run: swift test
+
+  build-ios:
+    runs-on: macos-15
+    needs: core-tests
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate app icon
+        run: swift scripts/make_icon.swift CityBuilder/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build for Simulator
+        run: |
+          set -o pipefail
+          xcodebuild -project CityBuilder.xcodeproj -scheme CityBuilder \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/sim CODE_SIGNING_ALLOWED=NO build | tee build-sim.log
+      - name: Build unsigned device app
+        run: |
+          set -o pipefail
+          xcodebuild -project CityBuilder.xcodeproj -scheme CityBuilder \
+            -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build-device.log
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/device/Build/Products/Release-iphoneos/CityBuilder.app Payload/
+          zip -qry CityBuilder-unsigned.ipa Payload
+      - name: Zip simulator app
+        run: |
+          cd build/sim/Build/Products/Debug-iphonesimulator
+          zip -qry "$GITHUB_WORKSPACE/CityBuilder-simulator.zip" CityBuilder.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CityBuilder-${{ github.sha }}
+          path: |
+            CityBuilder-unsigned.ipa
+            CityBuilder-simulator.zip
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-logs
+          path: "*.log"
