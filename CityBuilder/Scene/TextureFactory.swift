@@ -21,6 +21,7 @@ final class TextureFactory {
     private var structureCache: [StructureKey: SKTexture] = [:]
     private var highlightCache: [Bool: SKTexture] = [:]
     private var unpoweredIconCache: SKTexture?
+    private var smokePuffCache: SKTexture?
 
     private let tileW = SceneIsoMath.tileWidth
     private let tileH = SceneIsoMath.tileHeight
@@ -142,6 +143,19 @@ final class TextureFactory {
         }
         let texture = makeTexture(from: image)
         unpoweredIconCache = texture
+        return texture
+    }
+
+    func smokePuffTexture() -> SKTexture {
+        if let cached = smokePuffCache {
+            return cached
+        }
+        let image = renderImage(size: CGSize(width: 14, height: 14)) { cg in
+            cg.setFillColor(rgba(218, 224, 232, 0.75).cgColor)
+            cg.fillEllipse(in: CGRect(x: 2, y: 2, width: 10, height: 10))
+        }
+        let texture = makeTexture(from: image)
+        smokePuffCache = texture
         return texture
     }
 
@@ -303,24 +317,372 @@ final class TextureFactory {
         switch kind {
         case .forest:
             return renderForestTrees(variant: variant)
+        case .residential:
+            return renderResidential(level: level, variant: variant)
+        case .commercial:
+            return renderCommercial(level: level, variant: variant)
+        case .industrial:
+            return renderIndustrial(level: level, variant: variant)
+        case .park:
+            return renderPark(variant: variant)
+        case .powerPlant:
+            return renderPowerPlant()
+        case .school:
+            return renderSchool()
+        case .hospital:
+            return renderHospital()
         default:
-            // Placeholder box for buildings before M3 enriches detailed textures.
-            let height: CGFloat = 56
-            let image = renderImage(size: CGSize(width: tileW, height: height)) { cg in
-                let cy = height - self.halfH
+            return renderForestTrees(variant: 0)
+        }
+    }
+
+    private func renderResidential(level: UInt8, variant: UInt8) -> SKTexture {
+        let roofPalettes: [(UIColor, UIColor)] = [
+            (rgba(214, 80, 62), rgba(172, 56, 42)),
+            (rgba(226, 114, 58), rgba(182, 84, 38)),
+            (rgba(196, 68, 72), rgba(154, 48, 52))
+        ]
+        let roof = roofPalettes[Int(variant) % roofPalettes.count]
+
+        switch level {
+        case 1:
+            let totalH: CGFloat = 62
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
                 self.drawIsoBox(
-                    in: cg,
-                    cx: self.halfW,
-                    cy: cy,
-                    hw: 18,
-                    hh: 9,
-                    h: 22,
-                    topColor: rgba(200, 205, 212),
-                    leftColor: rgba(170, 176, 184),
-                    rightColor: rgba(140, 146, 156)
+                    in: cg, cx: self.halfW, cy: cy, hw: 18, hh: 9, h: 14,
+                    topColor: rgba(246, 238, 220),
+                    leftColor: rgba(232, 220, 198),
+                    rightColor: rgba(202, 188, 166)
+                )
+                self.drawPyramidRoof(
+                    in: cg, cx: self.halfW, cy: cy - 14, hw: 20, hh: 10, peakHeight: 14,
+                    leftColor: roof.0, rightColor: roof.1
                 )
             }
             return makeTexture(from: image)
+
+        case 2:
+            let totalH: CGFloat = 78
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 20, hh: 10, h: 28,
+                    topColor: rgba(248, 240, 224),
+                    leftColor: rgba(232, 220, 198),
+                    rightColor: rgba(202, 188, 166)
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 20, hh: 10, height: 28,
+                    leftColor: rgba(160, 146, 128, 0.75), rightColor: rgba(132, 118, 102, 0.75)
+                )
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy - 28, hw: 17, hh: 8.5, h: 5,
+                    topColor: roof.0, leftColor: roof.0, rightColor: roof.1
+                )
+            }
+            return makeTexture(from: image)
+
+        default:
+            let totalH: CGFloat = 104
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, h: 52,
+                    topColor: rgba(248, 240, 224),
+                    leftColor: rgba(230, 218, 196),
+                    rightColor: rgba(196, 182, 160)
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, height: 52,
+                    leftColor: rgba(145, 134, 118, 0.8), rightColor: rgba(120, 110, 96, 0.8)
+                )
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy - 52, hw: 13, hh: 6.5, h: 7,
+                    topColor: roof.0, leftColor: roof.0, rightColor: roof.1
+                )
+            }
+            return makeTexture(from: image)
+        }
+    }
+
+    private func renderCommercial(level: UInt8, variant: UInt8) -> SKTexture {
+        let tintShift = Int(variant % 3) * 10
+        let topCol = rgba(132 + tintShift, 198, 248)
+        let leftCol = rgba(68 + tintShift, 144, 218)
+        let rightCol = rgba(44 + tintShift, 108, 178)
+
+        switch level {
+        case 1:
+            let totalH: CGFloat = 62
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 19, hh: 9.5, h: 14,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy - 14, hw: 15, hh: 7.5, h: 4,
+                    topColor: rgba(210, 236, 255), leftColor: rgba(96, 165, 250), rightColor: rgba(59, 130, 246)
+                )
+            }
+            return makeTexture(from: image)
+
+        case 2:
+            let totalH: CGFloat = 78
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 20, hh: 10, h: 28,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 20, hh: 10, height: 28,
+                    leftColor: rgba(196, 232, 255, 0.8), rightColor: rgba(154, 206, 242, 0.75)
+                )
+            }
+            return makeTexture(from: image)
+
+        default:
+            let totalH: CGFloat = 104
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, h: 52,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, height: 52,
+                    leftColor: rgba(204, 236, 255, 0.85), rightColor: rgba(164, 214, 248, 0.75)
+                )
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy - 52, hw: 12, hh: 6, h: 8,
+                    topColor: rgba(186, 228, 255), leftColor: rgba(98, 174, 240), rightColor: rgba(66, 138, 206)
+                )
+            }
+            return makeTexture(from: image)
+        }
+    }
+
+    private func renderIndustrial(level: UInt8, variant: UInt8) -> SKTexture {
+        let topCol = rgba(232, 188, 92)
+        let leftCol = rgba(206, 162, 72)
+        let rightCol = rgba(168, 128, 52)
+
+        switch level {
+        case 1:
+            let totalH: CGFloat = 64
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 20, hh: 10, h: 14,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawSmokestack(in: cg, x: self.halfW - 6, baseY: cy - 14, height: 14, width: 5)
+            }
+            return makeTexture(from: image)
+
+        case 2:
+            let totalH: CGFloat = 82
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 21, hh: 10.5, h: 28,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 21, hh: 10.5, height: 28,
+                    leftColor: rgba(138, 104, 42, 0.7), rightColor: rgba(112, 82, 32, 0.7)
+                )
+                self.drawSmokestack(in: cg, x: self.halfW - 7, baseY: cy - 28, height: 15, width: 5)
+                self.drawSmokestack(in: cg, x: self.halfW + 6, baseY: cy - 28, height: 15, width: 5)
+            }
+            return makeTexture(from: image)
+
+        default:
+            let totalH: CGFloat = 108
+            let cy = totalH - halfH
+            let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+                self.drawIsoBox(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, h: 52,
+                    topColor: topCol, leftColor: leftCol, rightColor: rightCol
+                )
+                self.drawFloorLines(
+                    in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, height: 52,
+                    leftColor: rgba(132, 100, 42, 0.75), rightColor: rgba(108, 78, 30, 0.75)
+                )
+                self.drawSmokestack(in: cg, x: self.halfW - 7, baseY: cy - 52, height: 18, width: 5.5)
+                self.drawSmokestack(in: cg, x: self.halfW + 6, baseY: cy - 52, height: 16, width: 5.5)
+            }
+            return makeTexture(from: image)
+        }
+    }
+
+    private func renderPark(variant: UInt8) -> SKTexture {
+        let totalH: CGFloat = 56
+        let cy = totalH - halfH
+        let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+            // Dark green park lawn
+            self.diamondPath(in: cg, cx: self.halfW, cy: cy, hw: self.halfW - 2, hh: self.halfH - 1)
+            cg.setFillColor(rgba(82, 168, 86).cgColor)
+            cg.fillPath()
+
+            // Beige winding path
+            cg.setStrokeColor(rgba(226, 212, 178).cgColor)
+            cg.setLineWidth(4.5)
+            cg.setLineCap(.round)
+            cg.move(to: CGPoint(x: self.halfW - 14, y: cy + 5))
+            cg.addLine(to: CGPoint(x: self.halfW, y: cy))
+            cg.addLine(to: CGPoint(x: self.halfW + 14, y: cy - 5))
+            cg.strokePath()
+
+            // Center fountain / bench accent
+            cg.setFillColor(rgba(116, 194, 240).cgColor)
+            cg.fillEllipse(in: CGRect(x: self.halfW - 4.5, y: cy - 3, width: 9, height: 6))
+
+            // 2-3 lush park trees
+            let trees: [(CGFloat, CGFloat, CGFloat)] = [(-13, -3, 7.5), (12, 3, 7.0), (2, -7, 6.5)]
+            for (dx, dy, r) in trees {
+                let tx = self.halfW + dx
+                let ty = cy + dy
+                cg.setFillColor(rgba(104, 70, 44).cgColor)
+                cg.fill(CGRect(x: tx - 1.5, y: ty - 7, width: 3, height: 8))
+                cg.setFillColor(rgba(40, 118, 46).cgColor)
+                cg.fillEllipse(in: CGRect(x: tx - r, y: ty - 7 - r * 1.4, width: r * 2, height: r * 1.6))
+            }
+        }
+        return makeTexture(from: image)
+    }
+
+    private func renderPowerPlant() -> SKTexture {
+        let totalH: CGFloat = 86
+        let cy = totalH - halfH
+        let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+            self.drawIsoBox(
+                in: cg, cx: self.halfW, cy: cy, hw: 23, hh: 11.5, h: 24,
+                topColor: rgba(154, 162, 172),
+                leftColor: rgba(124, 132, 142),
+                rightColor: rgba(94, 102, 112)
+            )
+            // Warning stripe on side
+            self.fillPolygon([
+                CGPoint(x: self.halfW + 2, y: cy + 2),
+                CGPoint(x: self.halfW + 18, y: cy - 6),
+                CGPoint(x: self.halfW + 18, y: cy - 10),
+                CGPoint(x: self.halfW + 2, y: cy - 2)
+            ], in: cg, color: rgba(245, 158, 11))
+
+            // Twin tall smokestacks
+            self.drawSmokestack(in: cg, x: self.halfW - 8, baseY: cy - 24, height: 22, width: 6, stripeColor: rgba(239, 68, 68))
+            self.drawSmokestack(in: cg, x: self.halfW + 7, baseY: cy - 24, height: 22, width: 6, stripeColor: rgba(239, 68, 68))
+        }
+        return makeTexture(from: image)
+    }
+
+    private func renderSchool() -> SKTexture {
+        let totalH: CGFloat = 76
+        let cy = totalH - halfH
+        let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+            // Orange walls
+            self.drawIsoBox(
+                in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, h: 20,
+                topColor: rgba(245, 162, 86),
+                leftColor: rgba(232, 136, 56),
+                rightColor: rgba(196, 106, 38)
+            )
+            // Roof block
+            self.drawIsoBox(
+                in: cg, cx: self.halfW, cy: cy - 20, hw: 18, hh: 9, h: 5,
+                topColor: rgba(244, 240, 232),
+                leftColor: rgba(214, 206, 194),
+                rightColor: rgba(186, 178, 166)
+            )
+            // Flagpole + waving flag
+            let poleX = self.halfW
+            let poleBottom = cy - 25
+            cg.setStrokeColor(rgba(220, 224, 230).cgColor)
+            cg.setLineWidth(1.6)
+            cg.move(to: CGPoint(x: poleX, y: poleBottom))
+            cg.addLine(to: CGPoint(x: poleX, y: poleBottom - 16))
+            cg.strokePath()
+            self.fillPolygon([
+                CGPoint(x: poleX, y: poleBottom - 16),
+                CGPoint(x: poleX + 10, y: poleBottom - 13),
+                CGPoint(x: poleX, y: poleBottom - 10)
+            ], in: cg, color: rgba(220, 38, 38))
+        }
+        return makeTexture(from: image)
+    }
+
+    private func renderHospital() -> SKTexture {
+        let totalH: CGFloat = 76
+        let cy = totalH - halfH
+        let image = renderImage(size: CGSize(width: tileW, height: totalH)) { cg in
+            // White clinical building
+            self.drawIsoBox(
+                in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, h: 26,
+                topColor: rgba(248, 250, 252),
+                leftColor: rgba(226, 232, 240),
+                rightColor: rgba(196, 206, 218)
+            )
+            self.drawFloorLines(
+                in: cg, cx: self.halfW, cy: cy, hw: 22, hh: 11, height: 26,
+                leftColor: rgba(148, 163, 184, 0.7), rightColor: rgba(120, 134, 154, 0.7)
+            )
+            // Red cross emblem on rooftop
+            let roofCy = cy - 26
+            let cross = rgba(220, 38, 38)
+            cg.setStrokeColor(cross.cgColor)
+            cg.setLineWidth(3.2)
+            cg.setLineCap(.square)
+            cg.move(to: CGPoint(x: self.halfW - 6, y: roofCy))
+            cg.addLine(to: CGPoint(x: self.halfW + 6, y: roofCy))
+            cg.move(to: CGPoint(x: self.halfW, y: roofCy - 4))
+            cg.addLine(to: CGPoint(x: self.halfW, y: roofCy + 4))
+            cg.strokePath()
+        }
+        return makeTexture(from: image)
+    }
+
+    private func drawFloorLines(
+        in cg: CGContext,
+        cx: CGFloat,
+        cy: CGFloat,
+        hw: CGFloat,
+        hh: CGFloat,
+        height: CGFloat,
+        leftColor: UIColor,
+        rightColor: UIColor
+    ) {
+        cg.setLineWidth(1.2)
+        for step in stride(from: CGFloat(7.0), to: height - 3.0, by: 7.0) {
+            cg.setStrokeColor(leftColor.cgColor)
+            cg.move(to: CGPoint(x: cx - hw + 2.5, y: cy - step + 1.2))
+            cg.addLine(to: CGPoint(x: cx - 2.0, y: cy + hh - step - 1.0))
+            cg.strokePath()
+
+            cg.setStrokeColor(rightColor.cgColor)
+            cg.move(to: CGPoint(x: cx + 2.0, y: cy + hh - step - 1.0))
+            cg.addLine(to: CGPoint(x: cx + hw - 2.5, y: cy - step + 1.2))
+            cg.strokePath()
+        }
+    }
+
+    private func drawSmokestack(
+        in cg: CGContext,
+        x: CGFloat,
+        baseY: CGFloat,
+        height: CGFloat,
+        width: CGFloat,
+        stripeColor: UIColor? = nil
+    ) {
+        cg.setFillColor(rgba(116, 122, 130).cgColor)
+        cg.fill(CGRect(x: x - width * 0.5, y: baseY - height, width: width, height: height))
+        cg.setFillColor(rgba(82, 88, 96).cgColor)
+        cg.fill(CGRect(x: x, y: baseY - height, width: width * 0.5, height: height))
+        if let stripe = stripeColor {
+            cg.setFillColor(stripe.cgColor)
+            cg.fill(CGRect(x: x - width * 0.5, y: baseY - height + 3, width: width, height: 3))
         }
     }
 
